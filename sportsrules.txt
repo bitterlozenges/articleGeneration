@@ -61,6 +61,77 @@ PARAGRAPHS PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH
 PARAGRAPH QUOTE_PARAGRAPH
 PARAGRAPH STATS_PARAGRAPH
 
+# quotes -------------- #
+QUOTE_PARAGRAPH `"` SAD_QUOTE `"` QUOTE_ATTRIB `"` SAD_QUOTE `"` 
+QUOTE_PARAGRAPH `"` HAPPY_QUOTE `"` QUOTE_ATTRIB `"` HAPPY_QUOTE  `"` 
+QUOTE_PARAGRAPH `"` QUOTE `"` QUOTE_ATTRIB
+
+QUOTE_ATTRIB `, ` PERSON ` said.`
+QUOTE_ATTRIB `, said ` PERSON `.`
+
+PERSON PLAYER
+PERSON SCHOOL ` coach`
+PERSON AWAY_SCHOOL ` coach ` COACH
+PERSON HOME_SCHOOL ` coach ` COACH
+
+# we should weight these
+QUOTE HAPPYQUOTE
+QUOTE HAPPYQUOTE HAPPYQUOTE
+QUOTE HAPPYQUOTE HAPPYQUOTE HAPPYQUOTE
+QUOTE SADQUOTE
+QUOTE SADQUOTE SADQUOTE
+QUOTE SADQUOTE SADQUOTE SADQUOTE
+
+# emotions-based quotes
+HAPPYQUOTE HAPPYQUOTE_X `. `
+HAPPYQUOTE HAPPYQUOTE_X `, and ` HAPPYQUOTE_X`. `
+SADQUOTE SADQUOTE_X `. `
+SADQUOTE SADQUOTE_X ', but ' HAPPYQUOTE_X `. `
+SADQUOTE SADQUOTE_X `, and ` SADQUOTE_X `. `
+
+HAPPYQUOTE_X `we started the ` GAME_SEGMENT `strong`
+HAPPYQUOTE_X `we started the ` GAME_SEGMENT `real strong`
+HAPPYQUOTE_X `we played a ` POS_ADJECTIVE GAME_SEGMENT
+HAPPYQUOTE_X `everyone [was] giving it their all in the ` GAME_SEGMENT
+HAPPYQUOTE_X `everything really came together`
+HAPPYQUOTE_X `we did a ` POS_ADJECTIVE ` job of ` SPORTS_ACTION_G
+HAPPYQUOTE_X PLAYER `has really been competing ` POS_ADVERB ` for us`
+HAPPYQUOTE_X `I was really happy with the way we competed`
+HAPPYQUOTE_X `I think the tournament was a success`
+HAPPYQUOTE_X `we should continue ` SPORTS_ACTION_G `, ` SPORTS_ACTION_G `, and` SPORTS_ACTION_G POS_ADVERB
+HAPPYQUOTE_X `I thought we did a ` POS_ADJECTIVE ` job ` SPORTS_ACTION_G ` and ` SPORTS_ACTION_G
+HAPPYQUOTE_X `we see this tournament as a chance to practice ` SPORTS_ACTION_G POS_ADVERB
+HAPPYQUOTE_X `we caught them off guard a little bit`
+HAPPYQUOTE_X `I’m really proud of the team — we played our hearts out` 
+HAPPYQUOTE_X `this whole entire season, we’ve been rebounding ` POS_ADVERB 
+
+SADQUOTE_X `it just wasn't meant to be`
+SADQUOTE_X `we did everything but win`
+SADQUOTE_X `we have some unfinished business out there`
+SADQUOTE_X `some of the matches didn’t go our way`
+SADQUOTE_X `we weren’t short on chances, we just have to finish them`
+SADQUOTE_X `it just wasn’t quite there today.`
+
+
+POS_ADJECTIVE `great`
+POS_ADJECTIVE `solid`
+POS_ADJECTIVE `superb`
+POS_ADJECTIVE `good`
+POS_ADJECTIVE `consistent`
+POS_ADJECTIVE `pretty good`
+
+POS_ADVERB `well`
+POS_ADVERB `consistently`
+
+# gerunds, ending in -ing
+SPORTS_ACTION_G `moving the puck`
+SPORTS_ACTION_G `getting more defensive rebounds`
+SPORTS_ACTION_G `boxing out`
+SPORTS_ACTION_G `being slow and controlled on offense`
+SPORTS_ACTION_G `playing inside-out`
+SPORTS_ACTION_G `making them have to play defense`
+SPORTS_ACTION_G `holding onto a lot of pucks down low`
+
 # introduction @@@@@@@@@@@@@@@@@@@@@@ TODO TODO TODO TODO TODO @@@@@@@@@@@@@@@@@@@@@
 INTRODUCTION 
 
@@ -99,16 +170,15 @@ SPORT `wrestling`
 
 # first place, etc.
 RANKING `championship`
-RANKING `first`
-RANKING `second`
+RANKING FOUR_RANKING
 RANKING `last`
 
 # schools and shit
-SCHOOL HOME_TEAM
-SCHOOL AWAY_TEAM
+SCHOOL HOME_SCHOOL
+SCHOOL AWAY_SCHOOL
 
-HOME_TEAM *
-AWAY_TEAM *
+HOME_SCHOOL *
+AWAY_SCHOOL *
 
 MASCOT HOME_MASCOT
 MASCOT AWAY_MASCOT
@@ -170,14 +240,24 @@ FAILURE `falls to`
 FAILURE `shut out by`
 FAILURE `defeated by`
 FAILURE `swept by`
-FAILURE ``
-FAILURE ``
 
-
+# names
 PLAYER **
+COACH PLAYER  # cheat for now to make names easier
 
 VICTORY `victory`
 VICTORY `winning weekend`
 VICTORY `third straight win`
 VICTORY `fourth straight win`
 VICTORY `fifth straight win`
+
+GAME_SEGMENT FOUR_RANKING ` quarter`
+GAME_SEGMENT FOUR_RANKING ` set`
+GAME_SEGMENT TWO_RANKING ` half`
+
+FOUR_RANKING TWO_RANKING
+FOUR_RANKING `third`
+FOUR_RANKING `fourth`
+
+TWO_RANKING `first`
+TWO_RANKING `second`
