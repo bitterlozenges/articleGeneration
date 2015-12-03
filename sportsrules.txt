@@ -1,0 +1,183 @@
+# general rules
+# `xxx` = literals
+# * = user provided, single
+# ** = user provided, multiple 
+
+
+ARTICLE TITLE `\n\n` INTRODUCTION `\n` PARAGRAPHS
+
+# ====================== titles ====================== #
+
+TITLE TITLE_X
+TITLE TITLE_X SCORE
+TITLE TITLE_X `, ` SCORE
+
+# naked title (w/o score)
+TITLE_X TITLE_Y
+TITLE_X TITLE_Y PP_TITLE
+TITLE_X TEAM ` opens season ` PREP AWAY_CITY
+
+# naked-er title (w/o score and preposition)
+TITLE_Y TEAM ACTION_PHRASE
+TITLE_Y TEAM CLASS LEAD_VERB
+TITLE_Y CLASS LEAD_VERB TEAM ` to ` VICTORY
+TITLE_Y PLAYER LEAD_VERB `s ` TEAM ` to ` VICTORY
+
+
+# e.g. "trounces Columbia"
+ACTION_PHRASE OUTCOME_ACTION AWAY_SCHOOL
+ACTION_PHRASE ` takes ` RANKING
+ACTION_PHRASE ` finishes ` RANKING
+
+# prepositional phrases for titles, i.e. "in Milwaukee" or "at Shilleaugh Tournament"
+# without articles like "the", "a"
+PP_TITLE PREP AWAY_CITY
+PP_TITLE PREP TOURNAMENT_NAME ` tournament`
+PP_TITLE PREP TOURNAMENT_NAME ` championships`
+PP_TITLE PREP STAGE
+
+TOURNAMENT_NAME *
+
+# level of competition
+STAGE `finals`
+STAGE `semifinals`
+STAGE `quarterfinals`
+STAGE `regionals`
+STAGE `championships`
+
+TOURNAMENT_NAME *
+
+# prepositions
+PREP `at`
+PREP `in`
+
+# ====================== paragraphs ====================== #
+
+# you will go blind from the paragraphs
+PARAGRAPHS PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH 
+PARAGRAPHS PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH
+PARAGRAPHS PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH 
+
+PARAGRAPH QUOTE_PARAGRAPH
+PARAGRAPH STATS_PARAGRAPH
+
+# introduction @@@@@@@@@@@@@@@@@@@@@@ TODO TODO TODO TODO TODO @@@@@@@@@@@@@@@@@@@@@
+INTRODUCTION 
+
+# ====================== misc ====================== #
+# team description, i.e. "women's soccer". we should weight these.
+TEAM GENDER_PLUR's SPORT
+TEAM MASCOT
+
+# gender stuff
+GENDER_PLUR `women`
+GENDER_PLUR `men`
+
+# list of sports
+
+SPORT `baseball`
+SPORT `basketball`
+SPORT `crew`
+SPORT `cross-country`
+SPORT `fencing`
+SPORT `field hockey`
+SPORT `football`
+SPORT `golf`
+SPORT `ice hockey`
+SPORT `lacrosse`
+SPORT `sailing`
+SPORT `skiing`
+SPORT `soccer`
+SPORT `softball`
+SPORT `squash`
+SPORT `swimming and diving`
+SPORT `tennis`
+SPORT `track and field`
+SPORT `volleyball`
+SPORT `water polo`
+SPORT `wrestling`
+
+# first place, etc.
+RANKING `championship`
+RANKING `first`
+RANKING `second`
+RANKING `last`
+
+# schools and shit
+SCHOOL HOME_TEAM
+SCHOOL AWAY_TEAM
+
+HOME_TEAM *
+AWAY_TEAM *
+
+MASCOT HOME_MASCOT
+MASCOT AWAY_MASCOT
+
+HOME_MASCOT *
+AWAY_MASCOT *
+
+CITY HOME_CITY
+CITY AWAY_CITY
+
+HOME_CITY *
+AWAY_CITY *
+
+SCORE HOME_SCORE `-` AWAYSCORE
+
+HOME_SCORE *
+AWAY_SCORE *
+
+# class = plural
+CLASS `underclassmen`
+CLASS `upperclassmen`
+CLASS `freshmen`
+CLASS `sophomores`
+CLASS `juniors`
+CLASS `seniors
+
+# for title
+LEAD_VERB `lead`
+LEAD_VERB `lift`
+LEAD_VERB `propel`
+
+OUTCOME_ACTION SUCCESS
+OUTCOME_ACTION FAILURE
+
+SUCCESS `beats`
+SUCCESS `trounces`
+SUCCESS `dominates`
+SUCCESS `holds off`
+SUCCESS `downs`
+SUCCESS `remains unbeaten against`
+SUCCESS `survives`
+SUCCESS `shuts down`
+SUCCESS `shuts out`
+SUCCESS `sweeps away`
+SUCCESS `wins against`
+SUCCESS `tops`
+SUCCESS `defeats`
+SUCCESS `splits comeback win over`
+SUCCESS `staves off`
+SUCCESS `blows off`
+SUCCESS `sweeps`
+SUCCESS `finds success against`
+SUCCESS `picks up first win against`
+
+FAILURE `ties` # lol 
+FAILURE `earns draw against` # LOL
+FAILURE `comes up short against`
+FAILURE `falls to`
+FAILURE `shut out by`
+FAILURE `defeated by`
+FAILURE `swept by`
+FAILURE ``
+FAILURE ``
+
+
+PLAYER **
+
+VICTORY `victory`
+VICTORY `winning weekend`
+VICTORY `third straight win`
+VICTORY `fourth straight win`
+VICTORY `fifth straight win`
