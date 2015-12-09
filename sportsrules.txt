@@ -28,6 +28,7 @@ TITLE_Y PLAYER LEAD_VERB `s ` TEAM ` to ` VICTORY
 ACTION_PHRASE OUTCOME_ACTION AWAY_SCHOOL
 ACTION_PHRASE ` takes ` RANKING
 ACTION_PHRASE ` finishes ` RANKING
+ACTION_PHRASE ` racks up wins`
 
 # prepositional phrases for titles, i.e. "in Milwaukee" or "at Shilleaugh Tournament"
 # without articles like "the", "a"
@@ -45,8 +46,6 @@ STAGE `quarterfinals`
 STAGE `regionals`
 STAGE `championships`
 
-TOURNAMENT_NAME *
-
 # prepositions
 PREP `at`
 PREP `in`
@@ -60,8 +59,9 @@ PARAGRAPHS PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH `\n` PARAGRAPH
 
 PARAGRAPH QUOTE_PARAGRAPH
 PARAGRAPH STATS_PARAGRAPH
+PARAGRAPH PEOPLE_PARAGRAPH
 
-# quotes -------------- #
+# -------------- quotes -------------- #
 QUOTE_PARAGRAPH `"` SAD_QUOTE `"` QUOTE_ATTRIB `"` SAD_QUOTE `"` 
 QUOTE_PARAGRAPH `"` HAPPY_QUOTE `"` QUOTE_ATTRIB `"` HAPPY_QUOTE  `"` 
 QUOTE_PARAGRAPH `"` QUOTE `"` QUOTE_ATTRIB
@@ -70,9 +70,7 @@ QUOTE_ATTRIB `, ` PERSON ` said.`
 QUOTE_ATTRIB `, said ` PERSON `.`
 
 PERSON PLAYER
-PERSON SCHOOL ` coach`
-PERSON AWAY_SCHOOL ` coach ` COACH
-PERSON HOME_SCHOOL ` coach ` COACH
+PERSON SCHOOL ROLE PLAYER
 
 # we should weight these
 QUOTE HAPPYQUOTE
@@ -81,12 +79,14 @@ QUOTE HAPPYQUOTE HAPPYQUOTE HAPPYQUOTE
 QUOTE SADQUOTE
 QUOTE SADQUOTE SADQUOTE
 QUOTE SADQUOTE SADQUOTE SADQUOTE
+QUOTE TEAM ` did a ` ADVERB ` job of ` SPORTS_ACTION_G
 
 # emotions-based quotes
 HAPPYQUOTE HAPPYQUOTE_X `. `
 HAPPYQUOTE HAPPYQUOTE_X `, and ` HAPPYQUOTE_X`. `
 SADQUOTE SADQUOTE_X `. `
-SADQUOTE SADQUOTE_X ', but ' HAPPYQUOTE_X `. `
+# need to weight this high
+SADQUOTE SADQUOTE_X ', but ' HAPPYQUOTE_X `. ` 
 SADQUOTE SADQUOTE_X `, and ` SADQUOTE_X `. `
 
 HAPPYQUOTE_X `we started the ` GAME_SEGMENT `strong`
@@ -96,6 +96,7 @@ HAPPYQUOTE_X `everyone [was] giving it their all in the ` GAME_SEGMENT
 HAPPYQUOTE_X `everything really came together`
 HAPPYQUOTE_X `we did a ` POS_ADJECTIVE ` job of ` SPORTS_ACTION_G
 HAPPYQUOTE_X PLAYER `has really been competing ` POS_ADVERB ` for us`
+HAPPYQUOTE_X PLAYER ` and ` PLAYER ` were ` POS_ADJECTIVE
 HAPPYQUOTE_X `I was really happy with the way we competed`
 HAPPYQUOTE_X `I think the tournament was a success`
 HAPPYQUOTE_X `we should continue ` SPORTS_ACTION_G `, ` SPORTS_ACTION_G `, and` SPORTS_ACTION_G POS_ADVERB
@@ -104,6 +105,8 @@ HAPPYQUOTE_X `we see this tournament as a chance to practice ` SPORTS_ACTION_G P
 HAPPYQUOTE_X `we caught them off guard a little bit`
 HAPPYQUOTE_X `I’m really proud of the team — we played our hearts out` 
 HAPPYQUOTE_X `this whole entire season, we’ve been rebounding ` POS_ADVERB 
+HAPPYQUOTE_X `we’ve been waiting for it to all come together`
+HAPPYQUOTE_X `our ` SPORTS_ACTION_G ` was really ` POS_ADVERB ` today`
 
 SADQUOTE_X `it just wasn't meant to be`
 SADQUOTE_X `we did everything but win`
@@ -111,7 +114,9 @@ SADQUOTE_X `we have some unfinished business out there`
 SADQUOTE_X `some of the matches didn’t go our way`
 SADQUOTE_X `we weren’t short on chances, we just have to finish them`
 SADQUOTE_X `it just wasn’t quite there today.`
-
+SADQUOTE_X `every game it seems like... there’s something different that we’re disappointed with`
+SADQUOTE_X `our ` SPORTS_ACTION_G ` was really ` NEG_ADVERB ` today`
+SADQUOTE_X `hats off to our opponents`
 
 POS_ADJECTIVE `great`
 POS_ADJECTIVE `solid`
@@ -119,9 +124,13 @@ POS_ADJECTIVE `superb`
 POS_ADJECTIVE `good`
 POS_ADJECTIVE `consistent`
 POS_ADJECTIVE `pretty good`
+POS_ADJECTIVE `awesome`
 
 POS_ADVERB `well`
 POS_ADVERB `consistently`
+
+NEG_ADVERB `off`
+NEG_ADVERB `subpar `
 
 # gerunds, ending in -ing
 SPORTS_ACTION_G `moving the puck`
@@ -131,9 +140,54 @@ SPORTS_ACTION_G `being slow and controlled on offense`
 SPORTS_ACTION_G `playing inside-out`
 SPORTS_ACTION_G `making them have to play defense`
 SPORTS_ACTION_G `holding onto a lot of pucks down low`
+SPORTS_ACTION_G `finishing`
+SPORTS_ACTION_G `carrying the ball`
+SPORTS_ACTION_G `blocking and tackling`
+SPORTS_ACTION_G `going to the mat`
+SPORTS_ACTION_G `taking dives`
+SPORTS_ACTION_G `finding the back of the net`
 
 # introduction @@@@@@@@@@@@@@@@@@@@@@ TODO TODO TODO TODO TODO @@@@@@@@@@@@@@@@@@@@@
-INTRODUCTION 
+
+
+# -------------- stats -------------- #
+
+# -------------- people -------------- #
+PEOPLE_PARAGRAPH PP_PEOPLE PEOPLE_INTRO PEOPLE_X
+PEOPLE_PARAGRAPH PEOPLE_INTRO PEOPLE_X
+
+PP_PEOPLE `On the `  `side of the ball for `SCHOOL `, `
+PP_PEOPLE `In one last counterattack, `
+PP_PEOPLE `With the score at ` SCORE ` in the ` GAME_SEGMENT 
+PP_PEOPLE `The ` MASCOT `'s ` CLASS ` carried the day. `
+
+PEOPLE_INTRO PEOPLE_DESC PEOPLE_VP
+PEOPLE_INTRO PEOPLE_DESC PEOPLE_VP PEOPLE_GERUND
+
+PEOPLE_X PROUNOUN_S PEOPLE_VP
+PEOPLE_X PROUNOUN_S PEOPLE_VP PEOPLE_GERUND
+PEOPLE_X PROUNOUN_S ` also `PEOPLE_VP
+PEOPLE_X PROUNOUN_S ` also `PEOPLE_VP PEOPLE_GERUND
+
+# verb phrase
+PEOPLE_VP `perhaps played beyond ` PRONOUN_P ` years`
+PEOPLE_VP `led the team with` INT `kills`
+PEOPLE_VP `recorded a game-high` INT `tries`
+PEOPLE_VP `notched double-digit kills for the first time in ` PRONOUN_P ` career`
+PEOPLE_VP `he tipped a blazing shot over the bar with one hand in the 85th minute`
+PEOPLE_VP `provided defense in the middle, leading the team with ` INT ` blocks`
+PEOPLE_VP `made ` INT GAME_SEGMENT `saves before being replaced at halftime by ` PLAYER `.`
+
+PEOPLE_GERUND `, leading the team with ` INT `blocks`
+PEOPLE_GERUND `, rendering opponent ` PLAYER ` helpless. `
+PEOPLE_GERUND `, tying ` PEOPLE_DESC ` for the team-high in kills with ` INT
+PEOPLE_GERUND `, despite only attacking a total of ` INT ` times`
+PEOPLE_GERUND `setting ` PRONOUN_P ` career-high in total attacks in both of ` PRONOUN_P ` last two matches.`
+
+PEOPLE_DESC CLASS PLAYER
+PEOPLE_DESC CLASS POSITION PLAYER
+PEOPLE_DESC SCHOOL `'s ' POSITION PLAYER
+PEOPLE_DESC SCHOOL `'s ' CLASS POSITION PLAYER
 
 # ====================== misc ====================== #
 # team description, i.e. "women's soccer". we should weight these.
@@ -143,6 +197,19 @@ TEAM MASCOT
 # gender stuff
 GENDER_PLUR `women`
 GENDER_PLUR `men`
+
+# subject pronoun
+PRONOUN_S `she`
+PRONOUN_S `he`
+
+# object pronoun
+PRONOUN_O `her`
+PRONOUN_O `him`
+
+# possessive pronoun
+PRONOUN_P `her`
+PRONOUN_P `his`
+
 
 # list of sports
 
@@ -168,15 +235,49 @@ SPORT `volleyball`
 SPORT `water polo`
 SPORT `wrestling`
 
+# position on the team
+
+POSITION `backfielder`
+POSITION TWO_RANKING ` baseman`
+POSITION `catcher`
+POSITION `center`
+POSITION `center forward`
+POSITION `defender`
+POSITION `fielder`
+POSITION `forward`
+POSITION `fullback`
+POSITION `goalie`
+POSITION `goalkeeper`
+POSITION `halfback`
+POSITION `left wing`
+POSITION `lineman`
+POSITION `midfielder`
+POSITION `point forward`
+POSITION `point guard`
+POSITION `pitcher`
+POSITION `outfielder`
+POSITION `right receiver`
+POSITION `right wing`
+POSITION `rookie`
+POSITION `running back`
+POSITION `scorer`
+POSITION `shortstop`
+POSITION `shooting guard`
+POSITION `striker`
+
+BALL `ball`
+BALL `puck`
+
 # first place, etc.
+
 RANKING `championship`
 RANKING FOUR_RANKING
 RANKING `last`
 
 # schools and shit
+
 SCHOOL HOME_SCHOOL
 SCHOOL AWAY_SCHOOL
-
 HOME_SCHOOL *
 AWAY_SCHOOL *
 
@@ -233,8 +334,8 @@ SUCCESS `sweeps`
 SUCCESS `finds success against`
 SUCCESS `picks up first win against`
 
-FAILURE `ties` # lol 
-FAILURE `earns draw against` # LOL
+FAILURE `ties`
+FAILURE `earns draw against`
 FAILURE `comes up short against`
 FAILURE `falls to`
 FAILURE `shut out by`
@@ -243,7 +344,11 @@ FAILURE `swept by`
 
 # names
 PLAYER **
-COACH PLAYER  # cheat for now to make names easier
+
+# roles of people
+ROLE `coach`
+ROLE `captain`
+ROLE `co-captain`
 
 VICTORY `victory`
 VICTORY `winning weekend`
