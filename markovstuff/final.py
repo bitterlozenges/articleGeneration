@@ -9,10 +9,12 @@ try:
 except ImportError:
     import pickle
 import logging
+import sys
 import os
 import random
 from collections import defaultdict
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'rake'))
 import rake.rake as rake
 
 
@@ -90,8 +92,11 @@ def _wordIter(text, separator='.'):
             yield sub
 
 class MarkovChain(object):
-    def __init__(self, dbFilePath=None):
+    def __init__(self, dbFilePath=None, revDbFilePath=None):
         self.dbFilePath = dbFilePath
+        self.revDbFilePath = revDbFilePath
+
+        # try to open forward database
         if not dbFilePath:
             self.dbFilePath = os.path.join(os.path.dirname(__file__), "markovdb")
         try:
@@ -101,15 +106,33 @@ class MarkovChain(object):
             logging.warn('Database file corrupt or not found, using empty database')
             self.db = _db_factory()
 
+        # try to open backwards database
+        if not revDbFilePath:
+            self.revDbFilePath = os.path.join(os.path.dirname(__file__), "revmarkovdb")
+        try:
+            with open(self.revDbFilePath, 'rb') as dbfile:
+                self.rev_db = pickle.load(dbfile)
+        except (IOError, ValueError):
+            logging.warn('Database file corrupt or not found, using empty database')
+            self.rev_db = _db_factory()
+
     def generateDatabase(self, data, sentenceSep='[.!?\n]', n=2):
-        """ Generate word probability database from raw content string """
+        """ Generate word probability database from raw content string 
+        args:
+            data        - iterator over the rows in the database
+            sentenceSep - regular expression detailing possible sentence deliminators
+            n           - order of Markov Chain, 
+                          i.e. number of preceding words the next word will be based on
+        """
         self.db[('',)][''] = 0.0
+        # counter to display to user the progress of this function
         z = 0
-        print "asdfs"
+
         for row in data:
             z+=1
             if z%10 == 0:
                 print z
+
             # I'm using the database to temporarily store word counts
             s = strip_tags(row[2])
             the_str = re.sub(ur'[^\w_ .,\’-]+', u' ', s, flags=re.UNICODE)
@@ -123,15 +146,26 @@ class MarkovChain(object):
                 # first word follows a sentence end
                 self.db[("",)][words[0]] += 1
 
-                for order in range(1, n+1):
+                # order = order of Markov Chain
+                # store order = 1... n data for sentence starting purposes
+                for order in range(1, n + 1):
+                    # first words follow a sentence end
+                    self.rev_db[words[0:order]][""] += 1
+
                     for i in range(len(words) - 1):
                         if i + order >= len(words):
                             continue
-                        word = tuple(words[i:i + order])
-                        self.db[word][words[i + order]] += 1
+                        # store forward data
+                        prev_words = tuple(words[i:i + order])
+                        self.db[prev_words][words[i + order]] += 1
+
+                        # store backwards data
+                        next_words = tuple(words[i+1:i+order+1])
+                        self.rev_db[next_words][words[i]] += 1
 
                     # last word precedes a sentence end
                     self.db[tuple(words[len(words) - order:len(words)])][""] += 1
+                    self.rev_db[tuple( words[len(words)-order+1 : len(words)] ) + ("",)][words[len(words) - order]]
 
         # We've now got the db filled with parametrized word counts
         # We still need to normalize this to represent probabilities
@@ -147,51 +181,80 @@ class MarkovChain(object):
                 for nextword in self.db[word]:
                     self.db[word][nextword] /= wordsum
 
+        # normalize reverse 
+        z=0
+        for word in self.rev_db:
+            z+=1
+            if z%10 == 0:
+                print z
+            wordsum = 0
+            for prevword in self.rev_db[word]:
+                wordsum += self.rev_db[word][prevword]
+            if wordsum != 0:
+                for nextword in self.rev_db[word]:
+                    self.rev_db[word][prevword] /= wordsum
+
     def dumpdb(self):
         try:
             print "trying dump"
+
             with open(self.dbFilePath, 'wb') as dbfile:
                 pickle.dump(self.db, dbfile)
+            with open(self.revDbFilePath, 'wb') as dbfile:
+                pickle.dump(self.rev_db, dbfile)
+
             # It looks like db was written successfully
             return True
         except IOError:
-            logging.warn('Database file could not be written')
+            logging.warn('Database files could not be written')
             return False
 
     def generateString(self):
         """ Generate a "sentence" with the database of known text """
         return self._accumulateWithSeed(('',))
 
-    def generateStringWithSeed(self, seed):
+    def generateStringWithSeed(self, seed, reverse=False):
         """ Generate a "sentence" with the database and a given word """
         # using str.split here means we're contructing the list in memory
         # but as the generated sentence only depends on the last word of the seed
         # I'm assuming seeds tend to be rather short.
         words = seed.split()
-        if (words[-1],) not in self.db:
+        if (not reverse and (words[-1],) not in self.db) or (reverse and (words[0],) not in self.rev_db):
             # The only possible way it won't work is if the last word is not known
             raise StringContinuationImpossibleError('Could not continue string: '
                                                     + seed)
-        return self._accumulateWithSeed(words)
+        return self._accumulateWithSeed(words, reverse)
 
-    def _accumulateWithSeed(self, seed):
+    def embedStringWithSeed(self, seed):
+        """ Generate a sentence from the front and back. """
+        result = self.generateStringWithSeed(seed, True) + " "
+        result += self.generateStringWithSeed(seed)[(len(seed)+1):]
+        return result
+
+    def _accumulateWithSeed(self, seed, reverse=False):
         """ Accumulate the generated sentence with a given single word as a
         seed """
-        nextWord = self._nextWord(seed)
+        nextWord = self._nextWord(seed, reverse)
         sentence = list(seed) if seed else []
         while nextWord:
             sentence.append(nextWord)
-            nextWord = self._nextWord(sentence)
+            nextWord = self._nextWord(sentence, reverse)
         return ' '.join(sentence).strip()
 
-    def _nextWord(self, lastwords):
+    def _nextWord(self, lastwords, reverse=False):
+        db = self.db
+        if reverse:
+            db = self.rev_db
         lastwords = tuple(lastwords)
         if lastwords != ('',):
-            while lastwords not in self.db:
-                lastwords = lastwords[1:]
+            while lastwords not in db:
+                if reverse:
+                    lastwords = lastwords[:-1]
+                else:
+                    lastwords = lastwords[1:]
                 if not lastwords:
                     return ''
-        probmap = self.db[lastwords]
+        probmap = db[lastwords]
         sample = random.random()
         # since rounding errors might make us miss out on some words
         maxprob = 0.0
@@ -261,29 +324,31 @@ def strip_tags(value):
     return value
 
 
-# mc = MarkovChain("/Users/skaplan/Dropbox/Harvard2015/CS182/final/markov2")
-# while 1 == 1:
-#     foo=raw_input('Press enter to generate an article based on article.txt \n')
-#     sample_file = open("article.txt", 'r')
-#     txt = sample_file.read()
-#     paragraphs = genParSeeds(txt)
+mc = MarkovChain("/Users/skaplan/Dropbox/Harvard2015/CS182/final/markov2")
+while 1 == 1:
+    foo=raw_input('Press enter to generate an article based on article.txt \n')
+    sample_file = open("article.txt", 'r')
+    txt = sample_file.read()
+    paragraphs = genParSeeds(txt)
     
-#     for keywords in paragraphs:  
-#       fin_str = ""
-#       for keyword in keywords:
-#       	try:
-#       		a = mc.generateStringWithSeed(keyword)[(len(keyword)+1):]
-#       		fin_str += (a.capitalize() + "| ")
-#       	except Exception:
-#             pass
-#         try:
-#             #print mc.generateStringWithSeed(foo)
-#             fin_str += (mc.generateStringWithSeed(keyword) + ". ")
-#         except Exception:
-#             pass
-#       print fin_str
-#       if not (fin_str == ""):
-#       	print "\n"
+    for keywords in paragraphs:  
+      fin_str = ""
+      for keyword in keywords:
+        # generate words before seed
+      	try:
+      		a = mc.generateStringWithSeed(keyword)[(len(keyword)+1):]
+      		fin_str += (a.capitalize() + "| ")
+      	except Exception:
+            pass
+        # generate words after seed
+        try:
+            #print mc.generateStringWithSeed(foo)
+            fin_str += (mc.generateStringWithSeed(keyword) + ". ")
+        except Exception:
+            pass
+      print fin_str
+      if not (fin_str == ""):
+      	print "\n"
 
 try:
     print "wut"
