@@ -90,203 +90,192 @@ def _wordIter(text, separator='.'):
 						yield sub
 
 class MarkovChain(object):
-		def __init__(self, dbFilePath=None, revDbFilePath=None):
-				self.dbFilePath = dbFilePath
-				self.revDbFilePath = revDbFilePath
 
-				# try to open forward database
-				if not dbFilePath:
-						self.dbFilePath = os.path.join(os.path.dirname(__file__), "markovdb")
-				try:
-						with open(self.dbFilePath, 'rb') as dbfile:
-								self.db = pickle.load(dbfile)
-				except (IOError, ValueError):
-						logging.warn('Database file corrupt or not found, using empty database')
-						self.db = _db_factory()
+    def __init__(self, dbFilePath=None, revDbFilePath=None):
+        self.dbFilePath = dbFilePath
+        self.revDbFilePath = revDbFilePath
 
-				# try to open backwards database
-				if not revDbFilePath:
-						self.revDbFilePath = os.path.join(os.path.dirname(__file__), "revmarkovdb")
-				try:
-						with open(self.revDbFilePath, 'rb') as dbfile:
-								self.rev_db = pickle.load(dbfile)
-						print self.db
-				except (IOError, ValueError):
-						logging.warn('Database file corrupt or not found, using empty database')
-						self.rev_db = _db_factory()
+        # try to open forward database
+        if not dbFilePath:
+            self.dbFilePath = os.path.join(os.path.dirname(__file__), "markovdb")
+        try:
+            with open(self.dbFilePath, 'rb') as dbfile:
+                self.db = pickle.load(dbfile)
+        except (IOError, ValueError):
+            logging.warn('Database file corrupt or not found, using empty database')
+            self.db = _db_factory()
 
-		def generateDatabase(self, data, sentenceSep='[.!?\n]', n=2):
-				""" Generate word probability database from raw content string 
-				args:
-						data				- iterator over the rows in the database
-						sentenceSep - regular expression detailing possible sentence deliminators
-						n						- order of Markov Chain, 
-													i.e. number of preceding words the next word will be based on
-				"""
-				self.db[('',)][''] = 0.0
-				self.rev_db[('',)][''] = 0.0
-				# counter to display to user the progress of this function
-				z = 0
-				print "Importing data from database. Row number:"
-				for row in data:
-						z+=1
-						if z%10 == 0:
-						  if z == 50:
-						    break
-						  print z
+        # try to open backwards database
+        if not revDbFilePath:
+            self.revDbFilePath = os.path.join(os.path.dirname(__file__), "revmarkovdb")
+        try:
+            with open(self.revDbFilePath, 'rb') as dbfile:
+                self.rev_db = pickle.load(dbfile)
+        except (IOError, ValueError):
+            logging.warn('Database file corrupt or not found, using empty database')
+            self.rev_db = _db_factory()
 
-						# I'm using the database to temporarily store word counts
-						s = strip_tags(row[2])
-						the_str = re.sub(ur'[^\w_ .,\’-]+', u' ', s, flags=re.UNICODE)
-						textSample = _wordIter(the_str, sentenceSep)	# get an iterator for the 'sentences'
-						# We're using '' as special symbol for the beginning
-						# of a sentence
-						for line in textSample:
-								words = line.strip().split()	# split words in line
-								if len(words) == 0:
-										continue
-								# first word follows a sentence end
-								self.db[("",)][words[0]] += 1
+    def generateDatabase(self, data, sentenceSep='[.!?\n]', n=2):
+        """ Generate word probability database from raw content string 
+        args:
+            data        - iterator over the rows in the database
+            sentenceSep - regular expression detailing possible sentence deliminators
+            n           - order of Markov Chain, 
+                          i.e. number of preceding words the next word will be based on
+        """
+        self.db[('',)][''] = 0.0
+        # counter to display to user the progress of this function
+        z = 0
 
-								# order = order of Markov Chain
-								# store order = 1... n data for sentence starting purposes
-								for order in range(1, n + 1):
-										# first words follow a sentence end
-										self.rev_db[tuple(words[0:order])][""] += 1
+        for row in data:
+            z+=1
+            if z%10 == 0:
+                print z
 
-										for i in range(len(words) - 1):
-												if i + order >= len(words):
-														continue
-												# store forward data
-												prev_words = tuple(words[i:i + order])
-												self.db[prev_words][words[i + order]] += 1
+            # I'm using the database to temporarily store word counts
+            s = strip_tags(row[2])
+            the_str = re.sub(ur'[^\w_ .,\’-]+', u' ', s, flags=re.UNICODE)
+            textSample = _wordIter(the_str, sentenceSep)  # get an iterator for the 'sentences'
+            # We're using '' as special symbol for the beginning
+            # of a sentence
+            for line in textSample:
+                words = line.strip().split()  # split words in line
+                if len(words) == 0:
+                    continue
+                # first word follows a sentence end
+                self.db[("",)][words[0]] += 1
+                # last word precedes a sentence end
+                self.rev_db[("",)][words[-1]] += 1
 
-												# store backwards data
-												next_words = tuple(words[i+1:i+order+1])
-												self.rev_db[next_words][words[i]] += 1
+                # order = order of Markov Chain
+                # store order = 1... n data for sentence starting purposes
+                for order in range(1, n + 1):
+                    # first words follow a sentence end
+                    self.rev_db[tuple(words[0:order])][""] += 1
 
-										# last word precedes a sentence end
-										self.db[tuple(words[len(words) - order:len(words)])][""] += 1
-										self.rev_db[tuple( words[len(words)-order+1 : len(words)] )][""] += 1
+                    for i in range(len(words) - 1):
+                        if i + order >= len(words):
+                            continue
+                        # store forward data
+                        prev_words = tuple(words[i:i + order])
+                        self.db[prev_words][words[i + order]] += 1
 
-				# We've now got the db filled with parametrized word counts
-				# We still need to normalize this to represent probabilities
-				print "Generating chain. Word number:"
-				z=0
-				for word in self.db:
-						z+=1
-						if z%10000 == 0:
-								print z
-						wordsum = 0
-						for nextword in self.db[word]:
-								wordsum += self.db[word][nextword]
-						if wordsum != 0:
-								for nextword in self.db[word]:
-										self.db[word][nextword] /= wordsum
+                        # store backwards data
+                        next_words = tuple(words[i+1:i+order+1])
+                        self.rev_db[next_words][words[i]] += 1
 
-				# normalize reverse 
-				z=0
+                    # last word precedes a sentence end
+                    self.db[tuple(words[len(words) - order:len(words)])][""] += 1
+                
 
-				print "And the reverse chain. Word number:"
-				for word in self.rev_db:
-						z+=1
-						if z%10000 == 0:
-								print z
-						wordsum = 0
-						for prevword in self.rev_db[word]:
-								wordsum += self.rev_db[word][prevword]
-						if wordsum != 0:
-								for nextword in self.rev_db[word]:
-										self.rev_db[word][prevword] /= wordsum
-				print self.rev_db
+        # We've now got the db filled with parametrized word counts
+        # We still need to normalize this to represent probabilities
+        z=0
+        for word in self.db:
+            z+=1
+            if z%10 == 0:
+                print z
+            wordsum = 0
+            for nextword in self.db[word]:
+                wordsum += self.db[word][nextword]
+            if wordsum != 0:
+                for nextword in self.db[word]:
+                    self.db[word][nextword] /= wordsum
 
-		def dumpdb(self):
-				try:
-						print "Saving database"
+        # normalize reverse 
+        z=0
+        for word in self.rev_db:
+            z+=1
+            if z%10 == 0:
+                print z
+            wordsum = 0
+            for prevword in self.rev_db[word]:
+                wordsum += self.rev_db[word][prevword]
+            if wordsum != 0:
+                for prevword in self.rev_db[word]:
+                    self.rev_db[word][prevword] /= wordsum
 
-						with open(self.dbFilePath, 'wb') as dbfile:
-								pickle.dump(self.db, dbfile)
-						with open(self.revDbFilePath, 'wb') as dbfile:
-								pickle.dump(self.rev_db, dbfile)
+    def dumpdb(self):
+        try:
+            print "trying dump"
 
-						# It looks like db was written successfully
-						return True
-				except IOError:
-						logging.warn('Database files could not be written')
-						return False
+            with open(self.dbFilePath, 'wb') as dbfile:
+                pickle.dump(self.db, dbfile)
+            with open(self.revDbFilePath, 'wb') as dbfile:
+                pickle.dump(self.rev_db, dbfile)
 
-		def generateString(self):
-				""" Generate a "sentence" with the database of known text """
-				return self._accumulateWithSeed(('',))
+            # It looks like db was written successfully
+            return True
+        except IOError:
+            logging.warn('Database files could not be written')
+            return False
 
-		def generateStringWithSeed(self, seed, reverse=False):
-				""" Generate a "sentence" with the database and a given word """
-				# using str.split here means we're contructing the list in memory
-				# but as the generated sentence only depends on the last word of the seed
-				# I'm assuming seeds tend to be rather short.
-				words = seed.split()
-				if (not reverse and (words[-1],) not in self.db) or (reverse and (words[0],) not in self.rev_db):
-						# The only possible way it won't work is if the last word is not known
-						raise StringContinuationImpossibleError('Could not continue string: '
-																										+ seed)
-				return self._accumulateWithSeed(words, reverse)
+    def generateString(self):
+        """ Generate a "sentence" with the database of known text """
+        return self._accumulateWithSeed(('',))
 
-		def embedStringWithSeed(self, seed):
-				""" Generate a sentence from the front and back. """
-				print "seed ", seed
-				result = self.generateStringWithSeed(seed, True) + " "
-				result += self.generateStringWithSeed(seed)[(len(seed)+1):]
-				return result
+    def generateStringWithSeed(self, seed, reverse=False):
+        """ Generate a "sentence" with the database and a given word """
+        # using str.split here means we're contructing the list in memory
+        # but as the generated sentence only depends on the last word of the seed
+        # I'm assuming seeds tend to be rather short.
+        words = seed.split()
+        if (not reverse and (words[-1],) not in self.db) or (reverse and (words[0],) not in self.rev_db):
+            # The only possible way it won't work is if the last word is not known
+            raise StringContinuationImpossibleError('Could not continue string: '
+                                                    + seed)
+        return self._accumulateWithSeed(words, reverse)
 
-		def _accumulateWithSeed(self, seed, reverse=False):
-				""" Accumulate the generated sentence with a given single word as a
-				seed """
-				nextWord = self._nextWord(seed, reverse)
-				sentence = list(seed) if seed else []
-				i = 0
-				while nextWord:
-						sentence.append(nextWord)
-						nextWord = self._nextWord(sentence, reverse)
-						i+=1
-						if i == 10:
-							break
-				return ' '.join(sentence).strip()
+    def embedStringWithSeed(self, seed):
+        """ Generate a sentence from the front and back. """
+        result = self.generateStringWithSeed(seed, True) + " "
+        result += self.generateStringWithSeed(seed)[(len(seed)+1):]
+        return result
 
-		def _nextWord(self, lastwords, reverse=False):
-				db = self.db
-				if reverse:
-						db = self.rev_db
-				lastwords = tuple(lastwords)
-				if lastwords != ('',):
-						while lastwords not in db:
-								if reverse:
-										lastwords = lastwords[:-1]
-								else:
-										lastwords = lastwords[1:]
-								if not lastwords:
-										return ''
-				probmap = db[lastwords]
+    def _accumulateWithSeed(self, seed, reverse=False):
+        """ Accumulate the generated sentence with a given single word as a
+        seed """
+        nextWord = self._nextWord(seed, reverse)
+        sentence = list(seed) if seed else []
+        while nextWord:
+            if reverse:
+                sentence.insert(0, nextWord)
+            else:
+                sentence.append(nextWord)
+            nextWord = self._nextWord(sentence, reverse)
+        return ' '.join(sentence).strip()
 
-				if reverse:
-					print "lw ", lastwords, " pm ", probmap
-				
-				sample = random.random()
-				# since rounding errors might make us miss out on some words
-				maxprob = 0.0
-				maxprobword = ""
-				for candidate in probmap:
-						# remember which word had the highest probability
-						# this is the word we'll default to if we can't find anythin else
-						if probmap[candidate] > maxprob:
-								maxprob = probmap[candidate]
-								maxprobword = candidate
-						if sample > probmap[candidate]:
-								sample -= probmap[candidate]
-						else:
-								print "mpw ", maxprobword
-								return candidate
-				# getting here means we haven't found a matching word. :(
-				return maxprobword
+    def _nextWord(self, lastwords, reverse=False):
+        db = self.db
+        if reverse:
+            db = self.rev_db
+        lastwords = tuple(lastwords)
+        if lastwords != ('',):
+            while lastwords not in db:
+                if reverse:
+                    lastwords = lastwords[:-1]
+                else:
+                    lastwords = lastwords[1:]
+                if not lastwords:
+                    return ''
+        probmap = db[lastwords]
+        sample = random.random()
+        # since rounding errors might make us miss out on some words
+        maxprob = 0.0
+        maxprobword = ""
+        for candidate in probmap:
+            # remember which word had the highest probability
+            # this is the word we'll default to if we can't find anythin else
+            if probmap[candidate] > maxprob:
+                maxprob = probmap[candidate]
+                maxprobword = candidate
+            if sample > probmap[candidate]:
+                sample -= probmap[candidate]
+            else:
+                return candidate
+        # getting here means we haven't found a matching word. :(
+        return maxprobword
+>>>>>>> 84ac4c57f902279f96000a4a154388f9175688bf
 
 
 class MLStripper(HTMLParser):
