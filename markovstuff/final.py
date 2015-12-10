@@ -193,7 +193,7 @@ class MarkovChain(object):
             for prevword in self.rev_db[word]:
                 wordsum += self.rev_db[word][prevword]
             if wordsum != 0:
-                for nextword in self.rev_db[word]:
+                for prevword in self.rev_db[word]:
                     self.rev_db[word][prevword] /= wordsum
 
     def dumpdb(self):
