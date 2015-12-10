@@ -145,6 +145,8 @@ class MarkovChain(object):
                     continue
                 # first word follows a sentence end
                 self.db[("",)][words[0]] += 1
+                # last word precedes a sentence end
+                self.rev_db[("",)][words[-1]] += 1
 
                 # order = order of Markov Chain
                 # store order = 1... n data for sentence starting purposes
@@ -165,7 +167,7 @@ class MarkovChain(object):
 
                     # last word precedes a sentence end
                     self.db[tuple(words[len(words) - order:len(words)])][""] += 1
-                    self.rev_db[tuple( words[len(words)-order+1 : len(words)] ) + ("",)][words[len(words) - order]]
+                
 
         # We've now got the db filled with parametrized word counts
         # We still need to normalize this to represent probabilities
