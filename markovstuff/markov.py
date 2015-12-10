@@ -13,6 +13,9 @@ import sys
 import os
 import random
 from collections import defaultdict
+import nltk
+from nltk.tag.perceptron import PerceptronTagger
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'rake'))
 import rake.rake as rake
@@ -91,9 +94,12 @@ def _wordIter(text, separator='.'):
 
 class MarkovChain(object):
 
-    def __init__(self, dbFilePath=None, revDbFilePath=None):
+    def __init__(self, dbFilePath=None, revDbFilePath=None, pos=False):
         self.dbFilePath = dbFilePath
         self.revDbFilePath = revDbFilePath
+        if pos:
+        	self.tagger = PerceptronTagger()
+        self.pos = pos
 
         # try to open forward database
         if not dbFilePath:
@@ -135,6 +141,12 @@ class MarkovChain(object):
             # I'm using the database to temporarily store word counts
             s = strip_tags(row[2])
             the_str = re.sub(ur'[^\w_ .,\’-]+', u' ', s, flags=re.UNICODE)
+
+            if self.pos:
+            	rawwords = filter(None,the_str.split(" "))
+            	words = map(lambda x: x[1] + "_" + x[0],nltk.tag._pos_tag(rawwords, None, self.tagger))
+            	the_str = ' '.join(words)
+
             textSample = _wordIter(the_str, sentenceSep)  # get an iterator for the 'sentences'
             # We're using '' as special symbol for the beginning
             # of a sentence
@@ -173,7 +185,7 @@ class MarkovChain(object):
         z=0
         for word in self.db:
             z+=1
-            if z%10 == 0:
+            if z%10000 == 0:
                 print z
             wordsum = 0
             for nextword in self.db[word]:
@@ -186,7 +198,7 @@ class MarkovChain(object):
         z=0
         for word in self.rev_db:
             z+=1
-            if z%10 == 0:
+            if z%10000 == 0:
                 print z
             wordsum = 0
             for prevword in self.rev_db[word]:
@@ -226,10 +238,21 @@ class MarkovChain(object):
                                                     + seed)
         return self._accumulateWithSeed(words, reverse)
 
-    def embedStringWithSeed(self, seed):
+    def embedStringWithSeed(self, seeda):
         """ Generate a sentence from the front and back. """
-        result = self.generateStringWithSeed(seed, True) + " "
-        result += self.generateStringWithSeed(seed)[(len(seed)+1):]
+        result = ""
+        if self.pos:
+        	seed = " ".join(map(lambda x: x[1] + "_" + x[0],nltk.tag._pos_tag(nltk.word_tokenize(seeda), None, self.tagger)))
+        else:
+        	seed = seeda
+
+        result = self.generateStringWithSeed(seed, True)
+        if result != "":
+        	#if self.pos:
+        		#result = result.replace(".","").strip()
+        	result += " " + self.generateStringWithSeed(seed)[(len(seeda)+1):]
+        	result += ". "
+
         return result
 
     def _accumulateWithSeed(self, seed, reverse=False):
@@ -243,7 +266,9 @@ class MarkovChain(object):
             else:
                 sentence.append(nextWord)
             nextWord = self._nextWord(sentence, reverse)
-        return ' '.join(sentence).strip()
+        if self.pos:
+        	return ' '.join(map(lambda x: x.split("_")[-1],sentence)).strip()
+        return ' '.join(sentence)
 
     def _nextWord(self, lastwords, reverse=False):
         db = self.db
@@ -275,7 +300,6 @@ class MarkovChain(object):
                 return candidate
         # getting here means we haven't found a matching word. :(
         return maxprobword
->>>>>>> 84ac4c57f902279f96000a4a154388f9175688bf
 
 
 class MLStripper(HTMLParser):
@@ -328,17 +352,19 @@ def strip_tags(value):
 				value = new_value
 		return value
 
-#db to from
+#db to from pos
 if sys.argv[1] == "db":
 	try:
-			print "wut"
-			con = sqlite3.connect('data.db')
+			con = sqlite3.connect(sys.argv[3])
 		
 			cur = con.cursor()		
 			cur.execute('SELECT * FROM articles')
 			the_str = ""
 			data = cur.fetchall()
-			mc = MarkovChain(sys.argv[2]+".forwardb",sys.argv[2]+".backdb")
+			pos = False
+			if len(sys.argv)>4 and sys.argv[4] == "pos":
+ 				pos = True
+			mc = MarkovChain(sys.argv[2]+".forwardb",sys.argv[2]+".backdb",pos)
 			mc.generateDatabase(data)
 			mc.dumpdb()
 			print "Success!"
@@ -354,9 +380,13 @@ if sys.argv[1] == "db":
 		
 			if con:
 					con.close()
+#article db articlefile pos				
 elif sys.argv[1] == "article":
  	print "Loading Database"
-	mc = MarkovChain(sys.argv[2]+".forwardb",sys.argv[2]+".backdb")
+ 	pos=False
+ 	if len(sys.argv)>4 and sys.argv[4] == "pos":
+ 		pos = True
+	mc = MarkovChain(sys.argv[2]+".forwardb",sys.argv[2]+".backdb",pos)
 	while 1 == 1:
 			foo=raw_input('Press enter to generate an article based on the article \n')
 			sample_file = open(sys.argv[3], 'r')
@@ -365,7 +395,6 @@ elif sys.argv[1] == "article":
 			for keywords in paragraphs:	 
 				fin_str = ""
 				for keyword in keywords:
-					#print keyword
 					try:
 						fin_str += mc.embedStringWithSeed(keyword)
 					except Exception:
@@ -373,3 +402,47 @@ elif sys.argv[1] == "article":
 				print fin_str
 				if not (fin_str == ""):
 					print "\n"
+#test db posdb article
+elif sys.argv[1] == "test":
+ 	print "Loading Database"
+	mc = MarkovChain(sys.argv[2]+".forwardb",sys.argv[2]+".backdb",False)
+	mcpos = MarkovChain(sys.argv[3]+".forwardb",sys.argv[3]+".backdb",True)
+	#keep track of which type article was displayed first
+	b = ""
+	while 1 == 1:
+			
+			foo=raw_input('Press enter to generate an article based on the article \n')
+			print b #reveal which was which
+			sample_file = open(sys.argv[4], 'r')
+			txt = sample_file.read()
+			paragraphs = genParSeeds(txt)
+			#choose a random paragraph
+			rand = random.choice(paragraphs)
+			a = [mc,mcpos]
+			#choose randomly between POS or w/o to display first
+			random.shuffle(a)
+			m = a[0]
+			fin_str = ""
+			for keyword in rand:
+				try:
+					fin_str += m.embedStringWithSeed(keyword)
+				except Exception:
+					sys.exc_clear()
+			print fin_str
+			if not (fin_str == ""):
+				print "\n"
+			m = a[1]
+			print "---"
+			fin_str = ""
+			for keyword in rand:
+				try:
+					fin_str += m.embedStringWithSeed(keyword)
+				except Exception:
+					sys.exc_clear()
+			print fin_str
+			if not (fin_str == ""):
+				print "\n"
+			if m == mc:
+				b = "mcpos/mc"
+			else:
+				b = "nopos/mcpos"
