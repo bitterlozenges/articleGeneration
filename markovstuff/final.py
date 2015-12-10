@@ -239,7 +239,10 @@ class MarkovChain(object):
         nextWord = self._nextWord(seed, reverse)
         sentence = list(seed) if seed else []
         while nextWord:
-            sentence.append(nextWord)
+            if reverse:
+                sentence.insert(0, nextWord)
+            else:
+                sentence.append(nextWord)
             nextWord = self._nextWord(sentence, reverse)
         return ' '.join(sentence).strip()
 
