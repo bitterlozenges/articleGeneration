@@ -150,7 +150,7 @@ class MarkovChain(object):
                 # store order = 1... n data for sentence starting purposes
                 for order in range(1, n + 1):
                     # first words follow a sentence end
-                    self.rev_db[words[0:order]][""] += 1
+                    self.rev_db[tuple(words[0:order])][""] += 1
 
                     for i in range(len(words) - 1):
                         if i + order >= len(words):
@@ -324,31 +324,32 @@ def strip_tags(value):
     return value
 
 
-mc = MarkovChain("/Users/skaplan/Dropbox/Harvard2015/CS182/final/markov2")
-while 1 == 1:
-    foo=raw_input('Press enter to generate an article based on article.txt \n')
-    sample_file = open("article.txt", 'r')
-    txt = sample_file.read()
-    paragraphs = genParSeeds(txt)
+# mc = MarkovChain("/Users/skaplan/Dropbox/Harvard2015/CS182/final/markov2")
+# mc.generateDatabase
+# while 1 == 1:
+#     foo=raw_input('Press enter to generate an article based on article.txt \n')
+#     sample_file = open("article.txt", 'r')
+#     txt = sample_file.read()
+#     paragraphs = genParSeeds(txt)
     
-    for keywords in paragraphs:  
-      fin_str = ""
-      for keyword in keywords:
-        # generate words before seed
-      	try:
-      		a = mc.generateStringWithSeed(keyword)[(len(keyword)+1):]
-      		fin_str += (a.capitalize() + "| ")
-      	except Exception:
-            pass
-        # generate words after seed
-        try:
-            #print mc.generateStringWithSeed(foo)
-            fin_str += (mc.generateStringWithSeed(keyword) + ". ")
-        except Exception:
-            pass
-      print fin_str
-      if not (fin_str == ""):
-      	print "\n"
+#     for keywords in paragraphs:  
+#       fin_str = ""
+#       for keyword in keywords:
+#         # generate words before seed
+#       	try:
+#       		a = mc.generateStringWithSeed(keyword)[(len(keyword)+1):]
+#       		fin_str += (a.capitalize() + "| ")
+#       	except Exception:
+#             pass
+#         # generate words after seed
+#         try:
+#             #print mc.generateStringWithSeed(foo)
+#             fin_str += (mc.generateStringWithSeed(keyword) + ". ")
+#         except Exception:
+#             pass
+#       print fin_str
+#       if not (fin_str == ""):
+#       	print "\n"
 
 try:
     print "wut"
@@ -364,16 +365,16 @@ try:
         s = strip_tags(row[2])
         words += len(s.split(" "))
         i += 1
-    print "words " + str(words)
-    print "i ", i
+        print "words " + str(words)
+        print "i ", i
         
-    #     i+=1
-    #     if i == 10:
-    #         break
-    #mc = MarkovChain("/Users/skaplan/Dropbox/Harvard2015/CS182/final/markov2")
-    #mc.generateDatabase(data)
-    #mc.dumpdb()
-    #print mc.generateString()
+        i+=1
+        if i == 10:
+            break
+    mc = MarkovChain("/Users/skaplan/Dropbox/Harvard2015/CS182/final/markov2")
+    mc.generateDatabase(data)
+    mc.dumpdb()
+    print mc.generateString()
 
 except sqlite3.Error, e:
     
